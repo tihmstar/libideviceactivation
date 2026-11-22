@@ -2,6 +2,7 @@ name: build
 
 on:
   push:
+  pull_request:
   schedule:
     - cron: '0 0 1 * *'
 
@@ -17,28 +18,28 @@ jobs:
       run: |
           echo "target_triplet=`gcc -dumpmachine`" >> $GITHUB_ENV
     - name: fetch libplist
-      uses: dawidd6/action-download-artifact@v2
+      uses: dawidd6/action-download-artifact@v6
       with:
         github_token: ${{secrets.GITHUB_TOKEN}}
         workflow: build.yml
         name: libplist-latest_${{env.target_triplet}}
         repo: libimobiledevice/libplist
     - name: fetch libusbmuxd
-      uses: dawidd6/action-download-artifact@v2
+      uses: dawidd6/action-download-artifact@v6
       with:
         github_token: ${{secrets.GITHUB_TOKEN}}
         workflow: build.yml
         name: libusbmuxd-latest_${{env.target_triplet}}
         repo: libimobiledevice/libusbmuxd
     - name: fetch libimobiledevice-glue
-      uses: dawidd6/action-download-artifact@v2
+      uses: dawidd6/action-download-artifact@v6
       with:
         github_token: ${{secrets.GITHUB_TOKEN}}
         workflow: build.yml
         name: libimobiledevice-glue-latest_${{env.target_triplet}}
         repo: libimobiledevice/libimobiledevice-glue
     - name: fetch libimobiledevice
-      uses: dawidd6/action-download-artifact@v2
+      uses: dawidd6/action-download-artifact@v6
       with:
         github_token: ${{secrets.GITHUB_TOKEN}}
         workflow: build.yml
@@ -53,7 +54,7 @@ jobs:
           rm -rf extract/lib
           sudo cp -r extract/* /
           sudo ldconfig
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
     - name: autogen
@@ -68,7 +69,7 @@ jobs:
           DESTDIR=`pwd`/dest make install
           tar -C dest -cf libideviceactivation.tar usr
     - name: publish artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: libideviceactivation-latest_${{env.target_triplet}}
         path: libideviceactivation.tar
@@ -84,28 +85,28 @@ jobs:
           fi
       shell: bash
     - name: fetch libplist
-      uses: dawidd6/action-download-artifact@v2
+      uses: dawidd6/action-download-artifact@v6
       with:
         github_token: ${{secrets.GITHUB_TOKEN}}
         workflow: build.yml
         name: libplist-latest_macOS
         repo: libimobiledevice/libplist
     - name: fetch libusbmuxd
-      uses: dawidd6/action-download-artifact@v2
+      uses: dawidd6/action-download-artifact@v6
       with:
         github_token: ${{secrets.GITHUB_TOKEN}}
         workflow: build.yml
         name: libusbmuxd-latest_macOS
         repo: libimobiledevice/libusbmuxd
     - name: fetch libimobiledevice-glue
-      uses: dawidd6/action-download-artifact@v2
+      uses: dawidd6/action-download-artifact@v6
       with:
         github_token: ${{secrets.GITHUB_TOKEN}}
         workflow: build.yml
         name: libimobiledevice-glue-latest_macOS
         repo: libimobiledevice/libimobiledevice-glue
     - name: fetch libimobiledevice
-      uses: dawidd6/action-download-artifact@v2
+      uses: dawidd6/action-download-artifact@v6
       with:
         github_token: ${{secrets.GITHUB_TOKEN}}
         workflow: build.yml
@@ -118,7 +119,7 @@ jobs:
             tar -C extract -xvf $I
           done
           sudo cp -r extract/* /
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: install additional requirements
       run: |
           SDKDIR=`xcrun --sdk macosx --show-sdk-path 2>/dev/null`
@@ -151,12 +152,12 @@ jobs:
           DESTDIR=`pwd`/dest make install
           tar -C dest -cf libideviceactivation.tar usr
     - name: publish artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: libideviceactivation-latest_macOS
         path: libideviceactivation.tar
   build-windows:
-    runs-on: windows-2019
+    runs-on: windows-latest
     defaults:
       run:
         shell: msys2 {0}
@@ -177,6 +178,9 @@ jobs:
           base-devel
           git
           mingw-w64-${{ matrix.arch }}-gcc
+          mingw-w64-${{ matrix.arch }}-pkg-config
+          mingw-w64-${{ matrix.arch }}-openssl
+          mingw-w64-${{ matrix.arch }}-libxml2
           make
           libtool
           autoconf
@@ -187,28 +191,28 @@ jobs:
           echo "dest=$dest" >> $GITHUB_ENV
           echo "target_triplet=`gcc -dumpmachine`" >> $GITHUB_ENV
     - name: fetch libplist
-      uses: dawidd6/action-download-artifact@v2
+      uses: dawidd6/action-download-artifact@v6
       with:
         github_token: ${{secrets.GITHUB_TOKEN}}
         workflow: build.yml
         name: libplist-latest_${{ matrix.arch }}-${{ env.dest }}
         repo: libimobiledevice/libplist
     - name: fetch libusbmuxd
-      uses: dawidd6/action-download-artifact@v2
+      uses: dawidd6/action-download-artifact@v6
       with:
         github_token: ${{secrets.GITHUB_TOKEN}}
         workflow: build.yml
         name: libusbmuxd-latest_${{ matrix.arch }}-${{ env.dest }}
         repo: libimobiledevice/libusbmuxd
     - name: fetch libimobiledevice-glue
-      uses: dawidd6/action-download-artifact@v2
+      uses: dawidd6/action-download-artifact@v6
       with:
         github_token: ${{secrets.GITHUB_TOKEN}}
         workflow: build.yml
         name: libimobiledevice-glue-latest_${{ matrix.arch }}-${{ env.dest }}
         repo: libimobiledevice/libimobiledevice-glue
     - name: fetch libimobiledevice
-      uses: dawidd6/action-download-artifact@v2
+      uses: dawidd6/action-download-artifact@v6
       with:
         github_token: ${{secrets.GITHUB_TOKEN}}
         workflow: build.yml
@@ -221,12 +225,18 @@ jobs:
             tar -C extract -xvf $I
           done
           cp -r extract/* /
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: install additional requirements
       run: |
-          #
+          mkdir deps
+          FILENAME="libcurl-8.1.0-static.tar.bz2"
+          curl -o $FILENAME.b64 -Ls "https://gist.github.com/nikias/6c397a0a2f4f4eafd91b81cccd22b761/raw/85216e60af6787f3b351291165eb91bd585ff09a/libcurl-8.1.0-static-${{matrix.arch}}-${{env.dest}}.tar.bz2"
+          base64 -d < $FILENAME.b64 > $FILENAME
+          tar -C deps -xjf $FILENAME
+          echo "LIBCURL_CFLAGS=-I`pwd`/deps/include -DCURL_STATICLIB" >> $GITHUB_ENV
+          echo "LIBCURL_LIBS=-Xlinker `pwd`/deps/lib/libcurl.a -Xlinker /${{env.dest}}/lib/libzstd.a -Xlinker /${{env.dest}}/lib/libz.a -Xlinker -lws2_32 -Xlinker -lcrypt32 -Xlinker -lwldap32 -Xlinker -lbcrypt -Xlinker -lssl -Xlinker -lcrypto" >> $GITHUB_ENV
     - name: autogen
-      run: ./autogen.sh CC=gcc CXX=g++
+      run: ./autogen.sh libcurl_CFLAGS="${{env.LIBCURL_CFLAGS}}" libcurl_LIBS="${{env.LIBCURL_LIBS}}"
     - name: make
       run: make
     - name: make install
@@ -237,7 +247,7 @@ jobs:
           DESTDIR=`pwd`/dest make install
           tar -C dest -cf libideviceactivation.tar ${{ env.dest }}
     - name: publish artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: libideviceactivation-latest_${{ matrix.arch }}-${{ env.dest }}
         path: libideviceactivation.tar

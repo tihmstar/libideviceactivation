@@ -61,43 +61,24 @@ case ${host_os} in
   *mingw32*|*cygwin*)
     AC_MSG_RESULT([${host_os}])
     win32=true
+    deplibs_check_method='pass_all'
     ;;
   darwin*|*android*)
     AC_MSG_RESULT([${host_os}])
     ;;
   *)
     AC_MSG_RESULT([${host_os}])
-    AX_PTHREAD([], [AC_MSG_ERROR([pthread is required to build ${PACKAGE}])])
-    AC_CHECK_LIB(pthread, [pthread_once], [], [AC_MSG_ERROR([pthread with pthread_once required to build ${PACKAGE}])])
     ;;
 esac
 AM_CONDITIONAL(WIN32, test x$win32 = xtrue)
 
-# Check if the C compiler supports __attribute__((constructor))
-AC_CACHE_CHECK([wether the C compiler supports constructor/destructor attributes],
-  ac_cv_attribute_constructor, [
-  ac_cv_attribute_constructor=no
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-    [[
-      static void __attribute__((constructor)) test_constructor(void) {
-      }
-      static void __attribute__((destructor)) test_destructor(void) {
-      }
-    ]], [])],
-    [ac_cv_attribute_constructor=yes]
-  )]
-)
-if test "$ac_cv_attribute_constructor" = "yes"; then
-  AC_DEFINE(HAVE_ATTRIBUTE_CONSTRUCTOR, 1, [Define if the C compiler supports constructor/destructor attributes])
+AS_COMPILER_FLAGS(GLOBAL_CFLAGS, "-Wall -Wextra -Wmissing-declarations -Wredundant-decls -Wshadow -Wpointer-arith  -Wwrite-strings -Wswitch-default -Wno-unused-parameter -fsigned-char -fvisibility=hidden")
+
+if test "x$enable_static" = "xyes" -a "x$enable_shared" = "xno"; then
+  GLOBAL_CFLAGS+=" -DIDEVICE_ACTIVATION_STATIC"
 fi
 
-AS_COMPILER_FLAGS(GLOBAL_CFLAGS, "-Wall -Wextra -Wmissing-declarations -Wredundant-decls -Wshadow -Wpointer-arith  -Wwrite-strings -Wswitch-default -Wno-unused-parameter -fsigned-char -fvisibility=hidden")
 AC_SUBST(GLOBAL_CFLAGS)
-
-case "$GLOBAL_CFLAGS" in
-  *-fvisibility=hidden*)
-    AC_DEFINE([HAVE_FVISIBILITY], [1], [Define if compiled with -fvisibility=hidden])
-esac
 
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
